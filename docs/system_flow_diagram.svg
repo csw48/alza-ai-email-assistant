@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2F6BEA"/>
+    </marker>
+  </defs>
+
+  <!-- Pozadie a titulok -->
+  <rect width="1920" height="1080" fill="#F5F4EF"/>
+  <text x="60" y="78" font-size="44" font-weight="700" fill="#15202B">System Flow Diagram</text>
+  <text x="60" y="118" font-size="24" fill="#4A5563">Alza AI Email Assistant · Gmail → n8n → Google Cloud Run → Vertex AI (Gemini)</text>
+
+  <!-- Zóny -->
+  <rect x="40" y="150" width="380" height="800" rx="20" fill="#EAE8E1"/>
+  <rect x="460" y="150" width="640" height="800" rx="20" fill="#EAE8E1"/>
+  <rect x="1140" y="150" width="740" height="800" rx="20" fill="#E1E8F5"/>
+  <text x="64" y="190" font-size="20" font-weight="700" letter-spacing="2" fill="#4A5563">GOOGLE WORKSPACE</text>
+  <text x="484" y="190" font-size="20" font-weight="700" letter-spacing="2" fill="#4A5563">N8N CLOUD · ORCHESTRÁCIA</text>
+  <text x="1164" y="190" font-size="20" font-weight="700" letter-spacing="2" fill="#2F6BEA">GOOGLE CLOUD · PROJEKT alza-email-ai</text>
+
+  <!-- Google Workspace -->
+  <rect x="80" y="230" width="300" height="140" rx="14" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="104" y="278" font-size="28" font-weight="700" fill="#15202B">Zákazník</text>
+  <text x="104" y="314" font-size="19" fill="#4A5563">e-mail s textom a prílohami</text>
+  <text x="104" y="342" font-size="19" fill="#4A5563">PDF · MP3/WAV · JPG/PNG</text>
+
+  <rect x="80" y="640" width="300" height="180" rx="14" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="104" y="688" font-size="28" font-weight="700" fill="#15202B">Gmail</text>
+  <text x="104" y="724" font-size="19" fill="#4A5563">vyhradená schránka bota</text>
+  <text x="104" y="752" font-size="17" fill="#4A5563">alza.ai.assistant.demo</text>
+  <text x="104" y="776" font-size="17" fill="#4A5563">@gmail.com</text>
+
+  <!-- n8n -->
+  <rect x="500" y="230" width="560" height="84" rx="12" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="524" y="266" font-size="24" font-weight="700" fill="#15202B"><tspan fill="#2F6BEA">1</tspan>  Gmail Trigger</text>
+  <text x="524" y="296" font-size="19" fill="#4A5563">nové neprečítané e-maily · kontrola každú minútu</text>
+
+  <rect x="500" y="350" width="560" height="84" rx="12" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="524" y="386" font-size="24" font-weight="700" fill="#15202B"><tspan fill="#2F6BEA">2</tspan>  Príprava dát</text>
+  <text x="524" y="416" font-size="19" fill="#4A5563">text a prílohy (base64) · filter automatických správ</text>
+
+  <rect x="500" y="470" width="560" height="84" rx="12" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="524" y="506" font-size="24" font-weight="700" fill="#15202B"><tspan fill="#2F6BEA">3</tspan>  HTTP POST /api/v1/process-email</text>
+  <text x="524" y="536" font-size="19" fill="#4A5563">HTTPS · hlavička x-api-key · retry pri chybe</text>
+
+  <rect x="500" y="590" width="560" height="84" rx="12" fill="#FCFBF8" stroke="#2F6BEA" stroke-width="2.5"/>
+  <text x="524" y="626" font-size="24" font-weight="700" fill="#15202B"><tspan fill="#2F6BEA">5</tspan>  Rozhodnutie: needs_human_review?</text>
+  <text x="524" y="656" font-size="19" fill="#4A5563">podľa štruktúrovanej odpovede modelu</text>
+
+  <rect x="500" y="730" width="265" height="96" rx="12" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="520" y="766" font-size="22" font-weight="700" fill="#15202B"><tspan fill="#2F6BEA">6a</tspan> Gmail Reply</text>
+  <text x="520" y="796" font-size="18" fill="#4A5563">nie · odpoveď do vlákna</text>
+
+  <rect x="795" y="730" width="265" height="96" rx="12" fill="#FCFBF8" stroke="#C9821F" stroke-width="2.5"/>
+  <text x="815" y="766" font-size="22" font-weight="700" fill="#15202B"><tspan fill="#9A5B00">6b</tspan> Gmail Draft</text>
+  <text x="815" y="796" font-size="18" fill="#4A5563">áno · koncept pre operátora</text>
+
+  <rect x="500" y="862" width="560" height="60" rx="12" fill="#FCFBF8" stroke="#DEDBD2"/>
+  <text x="524" y="900" font-size="22" font-weight="700" fill="#15202B"><tspan fill="#2F6BEA">7</tspan>  Označiť ako prečítané</text>
+
+  <!-- Google Cloud -->
+  <rect x="1180" y="230" width="420" height="444" rx="16" fill="#15202B"/>
+  <text x="1206" y="278" font-size="28" font-weight="700" fill="#F5F4EF"><tspan fill="#E9A23B">4</tspan>  Cloud Run</text>
+  <text x="1206" y="310" font-size="19" fill="#B9C4CF">FastAPI (Python) · europe-west1</text>
+  <g font-size="20" fill="#F5F4EF">
+    <text x="1206" y="360">a. overenie x-api-key</text>
+    <text x="1206" y="398">b. ochrana proti duplicitám (message_id)</text>
+    <text x="1206" y="436">c. kontrola príloh (typ, max 18 MB)</text>
+    <text x="1206" y="474">d. RAG: rozklad e-mailu na otázky</text>
+    <text x="1228" y="504" fill="#B9C4CF">→ embeddings → top 8 častí, prah 0,65</text>
+    <text x="1206" y="542">e. Gemini: odpoveď + prílohy</text>
+    <text x="1206" y="580">f. štruktúrovaný JSON výstup</text>
+    <text x="1228" y="610" fill="#B9C4CF">jazyk, téma, odpoveď,</text>
+    <text x="1228" y="638" fill="#B9C4CF">needs_human_review, dôvod</text>
+  </g>
+
+  <rect x="1656" y="230" width="190" height="444" rx="16" fill="#15202B"/>
+  <text x="1676" y="278" font-size="28" font-weight="700" fill="#F5F4EF">Vertex AI</text>
+  <text x="1676" y="330" font-size="20" font-weight="700" fill="#F5F4EF">Gemini 3.6</text>
+  <text x="1676" y="356" font-size="20" font-weight="700" fill="#F5F4EF">Flash</text>
+  <text x="1676" y="384" font-size="17" fill="#B9C4CF">generovanie</text>
+  <text x="1676" y="406" font-size="17" fill="#B9C4CF">odpovede,</text>
+  <text x="1676" y="428" font-size="17" fill="#B9C4CF">čítanie príloh</text>
+  <text x="1676" y="486" font-size="20" font-weight="700" fill="#F5F4EF">gemini-</text>
+  <text x="1676" y="512" font-size="20" font-weight="700" fill="#F5F4EF">embedding-001</text>
+  <text x="1676" y="540" font-size="17" fill="#B9C4CF">vektory pre RAG</text>
+
+  <rect x="1180" y="750" width="200" height="120" rx="12" fill="#FCFBF8" stroke="#C7D3EA"/>
+  <text x="1200" y="792" font-size="21" font-weight="700" fill="#15202B">Secret Manager</text>
+  <text x="1200" y="822" font-size="18" fill="#4A5563">tajný kľúč</text>
+  <text x="1200" y="846" font-size="18" fill="#4A5563">x-api-key</text>
+
+  <rect x="1410" y="750" width="200" height="120" rx="12" fill="#FCFBF8" stroke="#C7D3EA"/>
+  <text x="1430" y="792" font-size="21" font-weight="700" fill="#15202B">Znalostná báza</text>
+  <text x="1430" y="822" font-size="18" fill="#4A5563">7 dokumentov</text>
+  <text x="1430" y="846" font-size="18" fill="#4A5563">20 častí (v pamäti)</text>
+
+  <rect x="1656" y="750" width="190" height="120" rx="12" fill="#FCFBF8" stroke="#C7D3EA"/>
+  <text x="1672" y="792" font-size="21" font-weight="700" fill="#15202B">Service account</text>
+  <text x="1672" y="822" font-size="18" fill="#4A5563">rola Vertex AI User</text>
+  <text x="1672" y="846" font-size="18" fill="#4A5563">bez API kľúča</text>
+
+  <!-- Toky -->
+  <g stroke="#2F6BEA" stroke-width="3" fill="none">
+    <path d="M230 370 V636" marker-end="url(#a)"/>
+    <path d="M380 690 H440 V272 H496" marker-end="url(#a)"/>
+    <path d="M780 314 V346" marker-end="url(#a)"/>
+    <path d="M780 434 V466" marker-end="url(#a)"/>
+    <path d="M1060 512 H1176" marker-end="url(#a)"/>
+    <path d="M1180 632 H1064" marker-end="url(#a)"/>
+    <path d="M1604 452 H1652" marker-start="url(#a)" marker-end="url(#a)"/>
+    <path d="M780 674 V702 M632 702 H928 M632 702 V726" marker-end="url(#a)"/>
+    <path d="M928 702 V726" marker-end="url(#a)"/>
+    <path d="M632 826 V858" marker-end="url(#a)"/>
+    <path d="M928 826 V858" marker-end="url(#a)"/>
+    <path d="M500 800 H384" marker-end="url(#a)"/>
+  </g>
+  <g stroke="#8A97A5" stroke-width="2" stroke-dasharray="8 6" fill="none">
+    <path d="M1280 674 V750"/>
+    <path d="M1510 674 V750"/>
+    <path d="M1751 674 V750"/>
+  </g>
+
+  <!-- Popisy tokov -->
+  <text x="246" y="500" font-size="18" fill="#2F6BEA">e-mail</text>
+  <text x="246" y="524" font-size="18" fill="#2F6BEA">+ prílohy</text>
+  <text x="1072" y="498" font-size="17" fill="#2F6BEA">request</text>
+  <text x="1072" y="660" font-size="17" fill="#2F6BEA">JSON</text>
+  <text x="394" y="786" font-size="17" fill="#2F6BEA">odpoveď</text>
+
+  <!-- Legenda -->
+  <g font-size="19" fill="#4A5563">
+    <path d="M60 1010 H120" stroke="#2F6BEA" stroke-width="3" marker-end="url(#a)"/>
+    <text x="134" y="1016">tok dát</text>
+    <path d="M250 1010 H310" stroke="#8A97A5" stroke-width="2" stroke-dasharray="8 6"/>
+    <text x="324" y="1016">prístup / konfigurácia</text>
+    <rect x="560" y="996" width="44" height="28" rx="6" fill="#FCFBF8" stroke="#2F6BEA" stroke-width="2.5"/>
+    <text x="616" y="1016">rozhodnutie</text>
+    <rect x="770" y="996" width="44" height="28" rx="6" fill="#FCFBF8" stroke="#C9821F" stroke-width="2.5"/>
+    <text x="826" y="1016">človek v slučke</text>
+    <text x="1880" y="1016" text-anchor="end">Kontrola schránky každú minútu · spracovanie ≈ 20 s · cieľ &lt; 2 min</text>
+  </g>
+</svg>

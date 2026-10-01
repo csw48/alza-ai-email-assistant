@@ -1,0 +1,10 @@
+.venv
+.git
+.env
+tests
+n8n
+presentation
+**/__pycache__
+.pytest_cache
+.deepeval
+.DS_Store

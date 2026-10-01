@@ -1,0 +1,235 @@
+{
+  "name": "Alza AI Email Assistant Workflow",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Gmail Trigger (New Unread Email)",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "readStatus": "unread"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Format Payload & Attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Pripraví payload pre Python AI službu pre KAŽDÝ nový e-mail (nie len prvý).\n// Automatické správy (noreply, out-of-office, newslettre) preskočí, aby nevznikla slučka autoresponderov.\nconst out = [];\nconst items = $input.all();\n\nfor (let i = 0; i < items.length; i++) {\n  const json = items[i].json;\n  const headers = json.headers || {};\n  // n8n vracia hlavičky ako \"Názov: hodnota\" – necháme len hodnotu\n  const header = (name) => String(headers[name] || '').replace(/^[^:]*:\\s*/, '').trim().toLowerCase();\n\n  const fromAddress = json.from?.value?.[0]?.address || '';\n  const autoSubmitted = header('auto-submitted');\n  const precedence = header('precedence');\n  const isAutomated =\n    /^(no-?reply|do-?not-?reply|mailer-daemon|postmaster)@/i.test(fromAddress) ||\n    (autoSubmitted !== '' && autoSubmitted !== 'no') ||\n    ['bulk', 'list', 'junk', 'auto_reply'].includes(precedence) ||\n    header('x-autoreply') !== '';\n  if (isAutomated) continue;\n\n  // Binárne dáta môžu byť uložené mimo pamäte (n8n Cloud: filesystem/S3) –\n  // item.binary[key].data potom NIE JE base64, preto čítame cez helper.\n  const attachments = [];\n  for (const [key, meta] of Object.entries(items[i].binary || {})) {\n    const buffer = await this.helpers.getBinaryDataBuffer(i, key);\n    attachments.push({\n      filename: meta.fileName || key,\n      mime_type: meta.mimeType || 'application/octet-stream',\n      data_base64: buffer.toString('base64'),\n    });\n  }\n\n  out.push({\n    json: {\n      gmail_id: json.id,\n      message_id: json.messageId || `<${json.id}@mail.gmail.com>`,\n      thread_id: json.threadId || json.id,\n      sender: json.from?.text || fromAddress,\n      sender_email: fromAddress,\n      recipient: json.to?.text || '',\n      subject: json.subject || '',\n      // text obsahuje aj citovanú históriu vlákna – model tak vidí predošlú komunikáciu\n      body_text: json.text || json.snippet || '',\n      // Gmail internalDate (ms) – kedy e-mail prišiel do schránky; slúži na meranie SLA\n      received_at: json.internalDate ? new Date(Number(json.internalDate)).toISOString() : (json.date || null),\n      attachments,\n    },\n    pairedItem: { item: i },\n  });\n}\n\nreturn out;\n"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Call Python AI Microservice (Cloud Run)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR-CLOUD-RUN-URL.run.app/api/v1/process-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 110000
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Needs Human Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "needs-review",
+              "leftValue": "={{ $json.needs_human_review }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5",
+      "name": "Create Draft for Agent",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        200
+      ],
+      "parameters": {
+        "resource": "draft",
+        "operation": "create",
+        "subject": "={{ $json.reply_subject }}",
+        "emailType": "html",
+        "message": "={{ $json.reply_body_html }}",
+        "options": {
+          "threadId": "={{ $json.thread_id }}",
+          "sendTo": "={{ $('Format Payload & Attachments').item.json.sender_email }}"
+        }
+      }
+    },
+    {
+      "id": "6",
+      "name": "Gmail Reply (In Original Thread)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        400
+      ],
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Format Payload & Attachments').item.json.gmail_id }}",
+        "emailType": "html",
+        "message": "={{ $json.reply_body_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "7",
+      "name": "Mark as Read",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1340,
+        300
+      ],
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Format Payload & Attachments').item.json.gmail_id }}"
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger (New Unread Email)": {
+      "main": [
+        [
+          {
+            "node": "Format Payload & Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Payload & Attachments": {
+      "main": [
+        [
+          {
+            "node": "Call Python AI Microservice (Cloud Run)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Python AI Microservice (Cloud Run)": {
+      "main": [
+        [
+          {
+            "node": "Needs Human Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Human Review?": {
+      "main": [
+        [
+          {
+            "node": "Create Draft for Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail Reply (In Original Thread)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Draft for Agent": {
+      "main": [
+        [
+          {
+            "node": "Mark as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Reply (In Original Thread)": {
+      "main": [
+        [
+          {
+            "node": "Mark as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
